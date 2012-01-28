@@ -32,7 +32,7 @@ local newTerrain = function(x,y,width,height,pxW,pxH,img)
     			M.terraGrid[w][h] = display.newRect( M.displayGroup, (w-1)*pxW+x, (h-1)*pxH+y, pxW, pxH )  --Create a Rect for Terrain, this should be an image eventualy
     			if M.debug then display.newText(  count,  (w-1)*pxW+x, (h-1)*pxH+y,nil,7) end
     			M.terraGrid[w][h]:addEventListener ( "touch", M.terrainTouch )
-    			M.terraGrid[w][h]:setFillColor ( math.random(0,255), math.random(0,255), math.random(0,255)  )
+    			M.terraGrid[w][h]:setFillColor ( math.random(0,255), math.random(0,255), math.random(0,255),0  )
     			M.terraGrid[w][h].name = count
     			M.terraLookup[count] =  {}
     			M.terraLookup[count]["state"] = "dirt"
