@@ -16,6 +16,7 @@ M.debug = false
 -- functions are now local:
 local newTerrain = function(x,y,width,height,pxW,pxH,img)
     print( "init New Terrain" )
+    if M.debug then physics.setDrawMode( "hybrid" ) end
     M.w = width
     M.h = height
     local count = 1
@@ -24,13 +25,15 @@ local newTerrain = function(x,y,width,height,pxW,pxH,img)
     	for h = 1, M.h do
     		if img == "rect" then
     			M.terraGrid[w][h] = display.newRect( M.displayGroup, (w-1)*pxW+x, (h-1)*pxH+y, pxW, pxH )  --Create a Rect for Terrain, this should be an image eventualy
-    			--display.newText(  count,  (w-1)*pxW+x, (h-1)*pxH+y,nil,10)
+    			if M.debug then display.newText(  count,  (w-1)*pxW+x, (h-1)*pxH+y,nil,7) end
     			M.terraGrid[w][h]:addEventListener ( "touch", M.terrainTouch )
     			M.terraGrid[w][h]:setFillColor ( math.random(0,255), math.random(0,255), math.random(0,255)  )
     			M.terraGrid[w][h].name = count
-    			M.terraLookup[count] = {}
-    			M.gridLookup(count)
-    			physics.addBody ( M.terraGrid[w][h],  "static",{density=.5, friction=.1, bounce=.4} )
+    			M.terraLookup[count] =  {}
+    			M.terraLookup[count]["state"] = "dirt"
+    			M.terraLookup[count]["grid"] = M.gridLookup(count)
+    			M.terraLookup[count]["object"]   =  M.terraGrid[w][h]			
+    			physics.addBody ( M.terraGrid[w][h],  "static",{density=.5, friction=0.02, bounce=.5} )
     		end
     		count = count + 1
     	end
@@ -43,6 +46,7 @@ M.newTerrain = newTerrain
 local terrainTouch = function(event)
     if M.debug then print( "Touched it",event.phase ,event.target.name) end
     --M.removeBlock(event.target)
+    
     M.removeQueue[event.target] = event.target
     --remove the object touched here
 end
@@ -54,6 +58,7 @@ local removeBlock = function(target)
 	if M.debug then print("removing",target.name) end
 	physics.removeBody(target ) 	 	--remove our physics objects
 	display.remove(target)					-- remove display objects
+	M.terraLookup[target.name]["state"] = "hole"
 	--M.displayGroup:remove(target)
 	target = nil 									-- remove the display object from memory now
 	end
@@ -64,7 +69,8 @@ M.removeBlock = removeBlock
 
 local enterFrameProcess = function()
 	--print(#M.removeQueue)
-	for k,v in pairs(M.removeQueue) do					 
+	for k,v in pairs(M.removeQueue) do
+			M.gridTest(k)					 
 			M.removeBlock(M.removeQueue[k])			
 	end
 	M.removeQueue = {}
@@ -75,6 +81,13 @@ M.enterFrameProcess = enterFrameProcess
 
 local gridTest = function(target)
 	-- for loop of the array in side here: M.terraLookup[target.name]
+
+	for k,v in pairs(M.terraLookup[target.name]["grid"]) do
+		if M.terraLookup[v]["state"] == "dirt" then
+			M.terraLookup[v]["object"]:setFillColor(128,128,128)
+		end
+	end
+
 end
 M.gridTest = gridTest
 
@@ -84,6 +97,61 @@ local gridLookup = function(id)
 -- 1,2,3
 -- 4,x,6
 -- 7,8,9
+	local id2 = nil
+	local id1 = nil
+	local id3 = nil
+	local id4 = nil
+	local id5 = id
+	local id6 = nil
+	 local id7 = nil
+	 local id8 = nil
+	 local id9 = nil
+	 	
+if (id%M.h)-1 == 0 then   	--we are the top edge
+	 id2 = nil
+	 id1 = nil
+	 id3 = nil
+else  									--not the top edge store values
+	 id2 = id-1
+	 id1 = id2-M.h
+	 id3 = id2+M.h
+end
+
+if (id%M.h) == 0 then   	--we are the bottom edge
+	print("bottom",id)
+	 id7 = nil
+	 id8 = nil
+	 id9 = nil
+else  									--not the top edge store values
+ 	id8 = id+1
+ 	id7 = id8-M.h
+ 	id9 = id8+M.h
+end
+
+
+if id-M.h < 1 then 	-- left edge
+	 id4 = nil  --center left and fix edge
+	 id1 = nil
+	 id7 = nil
+	else
+	 id4 = id-M.h 			--just set center left
+end
+
+
+if id+M.h > M.h*M.w then  -- right edge
+		id3 = nil
+		id6 = nil
+		id9 = nil
+	else
+		id6 = id+M.h
+	
+end
+
+
+
+
+
+return {id1,id2,id3,id4,id5,id6,id7,id8,id9}
 
 end
 M.gridLookup = gridLookup
