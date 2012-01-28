@@ -12,7 +12,6 @@ local terra = require("terra")
 local physics = require("physics")
 physics.start()
 
-
 display.setStatusBar(display.HiddenStatusBar)
 
 --test = display.newRect(0,0,128,64)
