@@ -1,0 +1,13 @@
+-- build.settings for project: TerraDestructa-- Managed with http://CoronaProjectManager.com-- Copyright 2012 Brad Herman. All Rights Reserved.-- cpmgen build.settings
+settings =
+{
+	orientation =
+	{
+		default ="portrait",
+		supported =
+		{
+			"portrait","portraitUpsideDown"
+		},
+	},
+
+}
