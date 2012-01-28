@@ -8,7 +8,7 @@
 ---- cpmgen main.lua
 
 local terra = require("terra")
-terra.debug = true
+--terra.debug = true
 local physics = require("physics")
 
 physics.start()
@@ -17,20 +17,16 @@ physics.setGravity( 0, 9.8 )
 
 display.setStatusBar(display.HiddenStatusBar)
 
+for i=1 , 40 do
+	local ball = display.newRoundedRect(  i*5, 0, 10, 10, 5 )
+physics.addBody( ball, { density = 1.0, friction = 0.3, bounce = 0.4, radius = 5 } )
 
-local ball = display.newRoundedRect(  50, 0, 25, 25, 15 )
-physics.addBody( ball, { density = 1.0, friction = 0.3, bounce = 0.2, radius = 10 } )
-
-
-local ball = display.newRoundedRect(  100, 0, 25, 25, 15 )
-physics.addBody( ball, { density = 1.0, friction = 0.3, bounce = 0.2, radius = 10 } )
+end
 
 
-local ball = display.newRoundedRect(  150, 0, 25, 25, 15 )
-physics.addBody( ball, { density = 1.0, friction = 0.3, bounce = 0.2, radius = 10 } )
 
-
-terra.newTerrain(0,100,20,10,15,17,"rect")
+terra.bounce = .8
+terra.newTerrain(0,40,34,44,10,10,"rect")
 
 
 physics.start( true )

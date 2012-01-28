@@ -11,14 +11,19 @@ M.terraLookup = {}
 M.displayGroup = display.newGroup ( )
 M.removeQueue = {}
 M.debug = false
-
-
+M.bounce = .5
+M.friction = 0.02
+M.density = .5
+M.pxH = 10
+M.pxW = 10
 -- functions are now local:
 local newTerrain = function(x,y,width,height,pxW,pxH,img)
     print( "init New Terrain" )
     if M.debug then physics.setDrawMode( "hybrid" ) end
     M.w = width
     M.h = height
+    M.pxH = pxH
+	M.pxw = pxW
     local count = 1
     for w = 1, M.w do
     	M.terraGrid[w]= {}
@@ -32,8 +37,11 @@ local newTerrain = function(x,y,width,height,pxW,pxH,img)
     			M.terraLookup[count] =  {}
     			M.terraLookup[count]["state"] = "dirt"
     			M.terraLookup[count]["grid"] = M.gridLookup(count)
-    			M.terraLookup[count]["object"]   =  M.terraGrid[w][h]			
-    			physics.addBody ( M.terraGrid[w][h],  "static",{density=.5, friction=0.02, bounce=.5} )
+    			M.terraLookup[count]["object"]   =  M.terraGrid[w][h]
+    			if M.terraLookup[count]["state"] == "edge" then 			
+    				physics.addBody ( M.terraGrid[w][h],  "static",{density=M.density, friction=M.friction, bounce=M.bounce,radius = ((M.pxW+M.pxH)/2)/2 } )
+    				M.terraGrid[w][h]:setFillColor(128,128,128)
+    			end
     		end
     		count = count + 1
     	end
@@ -81,10 +89,11 @@ M.enterFrameProcess = enterFrameProcess
 
 local gridTest = function(target)
 	-- for loop of the array in side here: M.terraLookup[target.name]
-
 	for k,v in pairs(M.terraLookup[target.name]["grid"]) do
 		if M.terraLookup[v]["state"] == "dirt" then
 			M.terraLookup[v]["object"]:setFillColor(128,128,128)
+			M.terraLookup[v]["state"] = "edge"
+			physics.addBody ( M.terraLookup[v]["object"],  "static",{density=.5, friction=0.02, bounce=.5 ,radius = ((M.pxW+M.pxH)/2)/2  } )
 		end
 	end
 
@@ -111,6 +120,7 @@ if (id%M.h)-1 == 0 then   	--we are the top edge
 	 id2 = nil
 	 id1 = nil
 	 id3 = nil
+	 M.terraLookup[id]["state"] = "edge"
 else  									--not the top edge store values
 	 id2 = id-1
 	 id1 = id2-M.h
@@ -118,10 +128,10 @@ else  									--not the top edge store values
 end
 
 if (id%M.h) == 0 then   	--we are the bottom edge
-	print("bottom",id)
 	 id7 = nil
 	 id8 = nil
 	 id9 = nil
+	 M.terraLookup[id]["state"] = "edge"
 else  									--not the top edge store values
  	id8 = id+1
  	id7 = id8-M.h
@@ -133,6 +143,7 @@ if id-M.h < 1 then 	-- left edge
 	 id4 = nil  --center left and fix edge
 	 id1 = nil
 	 id7 = nil
+	 M.terraLookup[id]["state"] = "edge"
 	else
 	 id4 = id-M.h 			--just set center left
 end
@@ -142,14 +153,11 @@ if id+M.h > M.h*M.w then  -- right edge
 		id3 = nil
 		id6 = nil
 		id9 = nil
+		M.terraLookup[id]["state"] = "edge"
 	else
 		id6 = id+M.h
 	
 end
-
-
-
-
 
 return {id1,id2,id3,id4,id5,id6,id7,id8,id9}
 
