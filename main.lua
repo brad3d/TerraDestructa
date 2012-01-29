@@ -13,7 +13,7 @@ movingObjects = display.newGroup ( )
 local background = display.newImage("background.png")
 
 local terra = require("terra")
---terra.debug = true
+terra.debug = false
 local physics = require("physics")
 
 physics.start()
@@ -33,12 +33,22 @@ end
 
 
 terra.bounce = .8
-terra.newTerrain(0,40,32,44,10,10,"rect")
+terra.carve = true -- if this is true then we do the save image / load image mask replace background carving, very alpha and slow
+-- using terra.carve you MUST have the terrain size divisable by 4, its a mask issue
+-- terra.carve works in the simulator for iphone, other devices do not work yet
+-- terra carve is SLOW on hardware due to save/load of jpg
+
+--terra.newTerrain(0,40,40,55,8,8,"rect")   -- our 'high' res
+terra.newTerrain(0,32,20,28,16,16,"rect")  -- our 'mid' res  
+--terra.newTerrain(0,32,10,14,32,32,"rect")  -- our 'low' res  
+--terra.newTerrain(17,20,9,9,32,32,"rect")  -- our 'test' res  
+main:insert(terra.dynamicMask)
 main:insert( background )
 main:insert( terra.displayGroupFG )
+
 main:insert( movingObjects )
 main:insert( terra.displayGroup )
---main:insert(terra.dynamicMask)
+
 
 
 

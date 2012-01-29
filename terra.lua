@@ -20,10 +20,10 @@ local physics = require("physics")
 
 -- Private Variables to this Lib, with good method coding the user never should see this stuff
 
-M.x = 0
-M.y = 0
-M.w = 10
-M.h = 10
+M.x = nil
+M.y = nil
+M.w = nil
+M.h = nil
 --M.terraGrid = {}
 M.terraLookup = {}
 M.displayGroup = display.newGroup ( )
@@ -38,7 +38,7 @@ M.density = .5
 M.pxH = 10
 M.pxW = 10
 M.boundRect = nil
-
+M.carve = false
 
 
 
@@ -47,10 +47,6 @@ M.boundRect = nil
 local newTerrain = function(x,y,width,height,pxW,pxH,img)
     print( "init New Terrain" )
     if M.debug then physics.setDrawMode( "hybrid" ) end
-    
-
-    
-    	
     M.x = x
 	M.y = y
     M.w = width
@@ -58,12 +54,13 @@ local newTerrain = function(x,y,width,height,pxW,pxH,img)
     M.pxH = pxH
 	M.pxW = pxW
     M.dynamicMask:toBack();
-    M.alphaRect =  display.newRect( M.displayGroupFG, x,y, M.w * M.pxW, M.h * M.pxH ) 
+    M.alphaRect =  display.newRect( M.displayGroupFG, M.x,M.y, M.w * M.pxW, M.h * M.pxH ) 
 	M.alphaRect:setFillColor(255,255,255)
     M.dynamicMask:insert(M.alphaRect);	
 	
-	M.boundRect =  display.newRect( M.displayGroupFG, x,y, M.w * M.pxW, M.h * M.pxH ) 
-	M.boundRect:setFillColor(64,28,28)
+	M.boundRect =  display.newRect( M.displayGroupFG, M.x,M.y, M.w * M.pxW, M.h * M.pxH ) 
+	local g = graphics.newGradient({ 64,28,28 },{ 200, 200, 200 },"down" )
+	M.boundRect:setFillColor(g)
 	M.boundRect:addEventListener ( "touch", M.terrainBoundTouch )
 	M.radius =  (((M.pxW+M.pxH)/2)/2) * .9
 	
@@ -114,24 +111,25 @@ local terrainBoundTouch = function(event)
     --remove the object touched here
     local id = M.coord2grid(event.x,event.y)
 	M.removeQueue[id] = id
-	M.updateMask(id)
+	if M.carve then
+		if  M.terraLookup[id]["state"] ~= "hole" then
+			M.updateMask(id) 
+		end
+	end
     
 end
 M.terrainBoundTouch = terrainBoundTouch
 
 
 local updateMask = function(id)  --update our mask image
-	local newCarve = display.newRect( M.displayGroup, (M.terraLookup[id]["w"]-1)*M.pxW+M.x, (M.terraLookup[id]["h"]-1)*M.pxH+M.y, M.pxW, M.pxH )
+	local newCarve = display.newRect( M.dynamicMask, (M.terraLookup[id]["w"]-1)*M.pxW+M.x, (M.terraLookup[id]["h"]-1)*M.pxH+M.y, M.pxW, M.pxH )
 	newCarve:setFillColor(0,0,0)
-	M.dynamicMask:insert(newCarve);
 	display.save (M.dynamicMask, "tmp.jpg",  system.DocumentsDirectory)
 	local mask = graphics.newMask( "tmp.jpg", system.DocumentsDirectory )
 	M.boundRect:setMask(nil)
-
 	M.boundRect:setMask(mask)
-    M.boundRect.maskX = .01;--display.contentWidth/4
-
-    M.boundRect.maskY = .01;--display.contentHeight/4        
+    M.boundRect.maskX = .0001
+    M.boundRect.maskY = .0001       
         
 end
 M.updateMask = updateMask
@@ -195,7 +193,7 @@ local gridTestbyID = function(id)  		-- OLD
 	for k,v in pairs(M.terraLookup[id]["grid"]) do
 		if v ~= id then
 		if M.terraLookup[v]["state"] == "dirt" then
-			M.terraLookup[v]["object"] = display.newRect( M.displayGroup, (M.terraLookup[v]["w"]-1)*M.pxW+M.x, (M.terraLookup[v]["h"]-1)*M.pxH+M.y, M.pxW, M.pxH )
+			M.terraLookup[v]["object"] = display.newRect( M.displayGroup, ((M.terraLookup[v]["w"]-1)*M.pxW)+M.x, (M.terraLookup[v]["h"]-1)*M.pxH+M.y, M.pxW, M.pxH )
 			M.terraLookup[v]["object"]:setFillColor(128,128,128)
 			M.terraLookup[v]["state"] = "edge"
 			physics.addBody ( M.terraLookup[v]["object"],  "static",{density=.5, friction=0.02, bounce=.5 ,radius =M.radius  } )
@@ -212,8 +210,8 @@ M.gridTestbyID = gridTestbyID
 local coord2grid  = function(x,y)
 	w = math.ceil(((x-M.x) / (M.w * M.pxW)) *M.w)
 	h = math.ceil(((y-M.y) / (M.h * M.pxH)) *M.h)
-	if M.debug then print(w,h,((w-1)*M.h)+h) end
 	id = ((w-1)*M.h)+h
+	if M.debug then print("coord2grid w,h,id",w,h,id) end
 	return id
 end
 M.coord2grid = coord2grid
