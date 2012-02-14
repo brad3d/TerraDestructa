@@ -1,4 +1,7 @@
--- build.settings for project: TerraDestructa-- Managed with http://CoronaProjectManager.com-- Copyright 2012 Brad Herman. All Rights Reserved.-- cpmgen build.settings
+-- build.settings for project: TerraDestructa
+-- Managed with http://CoronaProjectManager.com
+-- Copyright 2012 Brad Herman. All Rights Reserved.
+-- cpmgen build.settings
 settings =
 {
 	orientation =
@@ -9,5 +12,11 @@ settings =
 			"portrait","portraitUpsideDown"
 		},
 	},
-
+	iphone =
+	{
+		plist =
+		{	        
+	        UIApplicationExitsOnSuspend = true
+		},
+	}
 }

@@ -29,6 +29,7 @@ M.terraLookup = {}
 M.displayGroup = display.newGroup ( )
 M.displayGroupFG = display.newGroup ( )
 M.dynamicMask = display.newGroup();
+M.carveMask = display.newGroup();
 M.alphaRect = nil
 M.removeQueue = {}
 M.debug = false
@@ -38,8 +39,9 @@ M.density = .5
 M.pxH = 10
 M.pxW = 10
 M.boundRect = nil
-M.carve = false
-
+M.maskCarve = false
+M.BGdrawCarve = true
+M.graphics = nil
 
 
 
@@ -57,18 +59,18 @@ local newTerrain = function(x,y,width,height,pxW,pxH,img)
     M.alphaRect =  display.newRect( M.displayGroupFG, M.x,M.y, M.w * M.pxW, M.h * M.pxH ) 
 	M.alphaRect:setFillColor(255,255,255)
     M.dynamicMask:insert(M.alphaRect);	
-	
 	M.boundRect =  display.newRect( M.displayGroupFG, M.x,M.y, M.w * M.pxW, M.h * M.pxH ) 
 	local g = graphics.newGradient({ 64,28,28 },{ 200, 200, 200 },"down" )
 	M.boundRect:setFillColor(g)
 	M.boundRect:addEventListener ( "touch", M.terrainBoundTouch )
-	M.radius =  (((M.pxW+M.pxH)/2)/2) * .9
+	M.radius =  (((M.pxW+M.pxH)/2)/2) 
+    if img ~= "rect" then M.graphics = img  end
 	
     local count = 1
     for w = 1, M.w do
     	--M.terraGrid[w]= {}
     	for h = 1, M.h do
-    		if img == "rect" then
+    		
     			--M.terraGrid[w][h] = display.newRect( M.displayGroup, (w-1)*pxW+x, (h-1)*pxH+y, pxW, pxH )  --Create a Rect for Terrain, this should be an image eventualy
     			if M.debug then display.newText(  count,  (w-1)*pxW+x, (h-1)*pxH+y,nil,7) end
     			--M.terraGrid[w][h]:addEventListener ( "touch", M.terrainTouch )
@@ -81,12 +83,22 @@ local newTerrain = function(x,y,width,height,pxW,pxH,img)
     			M.terraLookup[count]["state"] = "dirt"
     			M.terraLookup[count]["grid"] = M.gridLookup(count)
     			if M.terraLookup[count]["state"] == "edge" then 	
-    				local object = display.newRect( M.displayGroup, (w-1)*pxW+x, (h-1)*pxH+y, pxW, pxH )		
+    				local object = nil
+    				if img == "rect" then
+    					object = display.newRect( M.displayGroup, (w-1)*pxW+x, (h-1)*pxH+y, pxW, pxH )
+    					object:setFillColor(128,128,128)	
+					else
+						
+    					object = display.newImage(M.graphics.edge)
+    					object:setReferencePoint( display.TopLeftReferencePoint )
+    					object.x =(w-1)*pxW+x
+    					object.y =(h-1)*pxH+y
+    				end					
     				physics.addBody ( object,  "static",{density=M.density, friction=M.friction, bounce=M.bounce,radius = M.radius } )
-    				object:setFillColor(128,128,128)
+    				
     				M.terraLookup[count]["object"]   =  object
     			end
-    		end
+    		
     		count = count + 1
     	end
     end
@@ -111,9 +123,14 @@ local terrainBoundTouch = function(event)
     --remove the object touched here
     local id = M.coord2grid(event.x,event.y)
 	M.removeQueue[id] = id
-	if M.carve then
+	if M.maskCarve then
 		if  M.terraLookup[id]["state"] ~= "hole" then
 			M.updateMask(id) 
+		end
+	end
+	if M.BGdrawCarve then
+		if  M.terraLookup[id]["state"] ~= "hole" then
+			M.updateCarveBG(id)
 		end
 	end
     
@@ -133,6 +150,22 @@ local updateMask = function(id)  --update our mask image
         
 end
 M.updateMask = updateMask
+
+
+local updateCarveBG = function(id)  --update our mask image
+	if M.graphics then
+		local newCarve = display.newImage(M.graphics.hole)
+		newCarve:setReferencePoint( display.TopLeftReferencePoint )
+		newCarve.x = (M.terraLookup[id]["w"]-1)*M.pxW+M.x
+		newCarve.y = (M.terraLookup[id]["h"]-1)*M.pxH+M.y
+		M.carveMask:insert(newCarve)
+	else
+		local newCarve = display.newRect( M.carveMask, (M.terraLookup[id]["w"]-1)*M.pxW+M.x, (M.terraLookup[id]["h"]-1)*M.pxH+M.y, M.pxW, M.pxH )
+		newCarve:setFillColor(0,0,0)       
+	end 
+end
+M.updateCarveBG = updateCarveBG
+
 
 
 local removeBlock = function(id)
@@ -193,9 +226,26 @@ local gridTestbyID = function(id)  		-- OLD
 	for k,v in pairs(M.terraLookup[id]["grid"]) do
 		if v ~= id then
 		if M.terraLookup[v]["state"] == "dirt" then
+			if M.graphics then
+				
+		M.terraLookup[v]["object"] = display.newImage(M.graphics.edge)
+		M.terraLookup[v]["object"]:setReferencePoint( display.TopLeftReferencePoint )
+		M.terraLookup[v]["object"].x = (M.terraLookup[v]["w"]-1)*M.pxW+M.x
+		M.terraLookup[v]["object"].y = (M.terraLookup[v]["h"]-1)*M.pxH+M.y
+		M.displayGroup:insert(M.terraLookup[v]["object"])					
+				
+				
+			else
+			
+			
 			M.terraLookup[v]["object"] = display.newRect( M.displayGroup, ((M.terraLookup[v]["w"]-1)*M.pxW)+M.x, (M.terraLookup[v]["h"]-1)*M.pxH+M.y, M.pxW, M.pxH )
 			M.terraLookup[v]["object"]:setFillColor(128,128,128)
+			end
 			M.terraLookup[v]["state"] = "edge"
+			
+	
+		
+			
 			physics.addBody ( M.terraLookup[v]["object"],  "static",{density=.5, friction=0.02, bounce=.5 ,radius =M.radius  } )
 		end
 		end
